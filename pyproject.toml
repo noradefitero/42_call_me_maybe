@@ -22,12 +22,22 @@ build-backend = "uv_build"
 [tool.mypy]
 python_version = "3.10"
 warn_return_any = true
-warn-unused-ignores = true
-ignore-missing-imports = true
-disallow-untyped-defs = true
-check-untyped-defs = true
+warn_unused_ignores = true
+ignore_missing_imports = true
+disallow_untyped_defs = true
+check_untyped_defs = true
 
 [dependency-groups]
 dev = [
+    "flake8>=7.3.0",
+    "mypy>=2.3.1",
     "pre-commit>=4.6.2",
+    "ruff>=0.16.8",
 ]
+
+[tool.coverage.report]
+skip_empty = true
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
