@@ -1,0 +1,33 @@
+[project]
+name = "call-me-maybe"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "noradefitero", email = "nora@defitero.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.13.5",
+    "typer>=0.27.2",
+]
+
+[project.scripts]
+call-me-maybe = "call_me_maybe:app"
+
+[build-system]
+requires = ["uv_build>=0.12.17,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn-unused-ignores = true
+ignore-missing-imports = true
+disallow-untyped-defs = true
+check-untyped-defs = true
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.6.2",
+]
