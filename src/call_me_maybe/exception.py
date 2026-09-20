@@ -1,0 +1,2 @@
+class NotInitiatedContext(Exception):
+    pass
