@@ -1,0 +1,6 @@
+{
+	"[python]": {
+		"editor.insertSpaces": true,
+		"editor.defaultFormatter": "charliermarsh.ruff",
+	},
+}

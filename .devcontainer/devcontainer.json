@@ -1,7 +1,6 @@
 {
-    "image": "mcr.microsoft.com/devcontainers/python:3.10",
-
-    "features": {
+	"image": "mcr.microsoft.com/devcontainers/python:3.10",
+	"features": {
 		"ghcr.io/devcontainers/features/common-utils": {
 			"installZsh": true,
 			"installOhMyZsh": true,
@@ -12,21 +11,23 @@
 			"plugins": "zsh-autosuggestions zsh-syntax-highlighting",
 			"omzPlugins": "https://github.com/zsh-users/zsh-autosuggestions.git https://github.com/zsh-users/zsh-syntax-highlighting.git"
 		},
-        "ghcr.io/jsburckhardt/devcontainer-features/uv:1": {},
-        "ghcr.io/jsburckhardt/devcontainer-features/ruff:1": {},
-  		"ghcr.io/devcontainers-extra/features/flake8:2.0.18": {},
-		"ghcr.io/devcontainers-extra/features/mypy:2.0.18": {}
-    },
-
-    "customizations": {
-        "vscode": {
-            "extensions": [
-                "ms-python.python",
+		"ghcr.io/jsburckhardt/devcontainer-features/uv:1": {},
+		"ghcr.io/jsburckhardt/devcontainer-features/ruff:1": {},
+		// "ghcr.io/devcontainers-extra/features/flake8:2.0.18": {},
+		"ghcr.io/devcontainers-extra/features/mypy:2.0.18": {},
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-python.python",
 				"ms-python.mypy-type-checker",
-				"ms-python.flake8",
+				// "ms-python.flake8",
 				"christian-kohler.path-intellisense",
-				"Rubymaniac.vscode-paste-and-indent"
-            ]
-        }
-    }
+				"Rubymaniac.vscode-paste-and-indent",
+				"github.vscode-github-actions",
+				"charliermarsh.ruff",
+				"tamasfe.even-better-toml"
+			]
+		}
+	}
 }
