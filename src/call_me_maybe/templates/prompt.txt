@@ -1,0 +1,11 @@
+<system_prompt>
+$system
+</system_prompt>
+
+<function_definitions>
+$defintions
+</function_definitions>
+
+<user_prompt>
+$prompt
+</user_prompt>
