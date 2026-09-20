@@ -3,14 +3,9 @@ name = "call-me-maybe"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-authors = [
-    { name = "noradefitero", email = "nora@defitero.com" }
-]
+authors = [{ name = "noradefitero", email = "nora@defitero.com" }]
 requires-python = ">=3.10"
-dependencies = [
-    "pydantic>=2.13.5",
-    "typer>=0.27.2",
-]
+dependencies = ["pydantic>=2.13.5", "typer>=0.27.2"]
 
 [project.scripts]
 call-me-maybe = "call_me_maybe:app"
@@ -28,12 +23,7 @@ disallow_untyped_defs = true
 check_untyped_defs = true
 
 [dependency-groups]
-dev = [
-    "flake8>=7.3.0",
-    "mypy>=2.3.1",
-    "pre-commit>=4.6.2",
-    "ruff>=0.16.8",
-]
+dev = ["flake8>=7.3.0", "mypy>=2.3.1", "pre-commit>=4.6.2", "ruff>=0.16.8"]
 
 [tool.coverage.report]
 skip_empty = true
@@ -41,3 +31,6 @@ skip_empty = true
 [tool.coverage.run]
 branch = true
 source = ["src"]
+
+[tool.ruff.lint]
+extend-select = ["I"]
