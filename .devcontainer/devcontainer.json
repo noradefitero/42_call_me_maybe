@@ -13,7 +13,7 @@
 		},
 		"ghcr.io/jsburckhardt/devcontainer-features/uv:1": {},
 		"ghcr.io/jsburckhardt/devcontainer-features/ruff:1": {},
-		// "ghcr.io/devcontainers-extra/features/flake8:2.0.18": {},
+		"ghcr.io/devcontainers-extra/features/flake8:2.0.18": {},
 		"ghcr.io/devcontainers-extra/features/mypy:2.0.18": {},
 	},
 	"customizations": {
@@ -21,7 +21,7 @@
 			"extensions": [
 				"ms-python.python",
 				"ms-python.mypy-type-checker",
-				// "ms-python.flake8",
+				"ms-python.flake8",
 				"christian-kohler.path-intellisense",
 				"Rubymaniac.vscode-paste-and-indent",
 				"github.vscode-github-actions",
