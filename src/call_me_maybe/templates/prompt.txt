@@ -1,11 +1,10 @@
-<system_prompt>
+<|im_start|>system
 $system
-</system_prompt>
+<tools>
+$definitions
+</tools><|im_end|>
 
-<function_definitions>
-$defintions
-</function_definitions>
+<|im_start|>user
+$prompt<|im_end|>
 
-<user_prompt>
-$prompt
-</user_prompt>
+<|im_start|>assistant

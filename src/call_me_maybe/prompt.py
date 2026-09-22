@@ -1,34 +1,38 @@
-from pathlib import Path
 from string import Template
 
-PROMPT_TEMPLATE_PATH = Path(__file__).parent / "templates" / "prompt.txt"
-SYSTEM_PROMPT_DEFAULT_PATH = Path(__file__).parent / "templates" / "system.md"
-FN_DEFINITIONS_DEFAULT_PATH: Path = Path(
-    "data/input/functions_definition.json"
-)
-INPUT_DEFAULT_PATH: Path = Path("data/input/function_calling_tests.json")
+import toon_format
+
+from call_me_maybe.models.function_lists import FunctionDefinitionList
 
 
-def get_system_prompt_from_file(system_prompt_file: Path | None = None) -> str:
-    if system_prompt_file:
-        try:
-            with open(system_prompt_file, "r") as file:
-                text = file.read()
-            return text
-        except FileNotFoundError:
-            print(
-                "Error opening user defined system prompt file, \
-                    using default system prompt"
-            )
-    with open(SYSTEM_PROMPT_DEFAULT_PATH, "r") as file:
-        text = file.read()
-    return text
+class Prompt:
+    def __init__(
+        self,
+        *,
+        template: str,
+        system: str = "",
+        definitions: FunctionDefinitionList | None = None,
+        user_prompt: str = "",
+    ) -> None:
+        self.__template = Template(template)
+        self.__system = system
+        definitions_json = (
+            definitions.model_dump_json() if definitions is not None else "{}"
+        )
+        self.__definitions = toon_format.encode(definitions_json)
+        self.__user_prompt = user_prompt
 
+    @property
+    def user_prompt(self) -> str:
+        return self.__user_prompt
 
-def get_prompt_template(
-    system_prompt: str, functions_definition: str
-) -> Template:
-    with open(PROMPT_TEMPLATE_PATH, "r") as file:
-        template = Template(file.read())
-    template.substitute(system=system_prompt, definitions=functions_definition)
-    return template
+    @user_prompt.setter
+    def user_prompt(self, msg: str) -> None:
+        self.__user_prompt = msg
+
+    def __str__(self) -> str:
+        return self.__template.safe_substitute(
+            system=self.__system,
+            definitions=self.__definitions,
+            prompt=self.__user_prompt,
+        )
