@@ -2,17 +2,19 @@ import asyncio
 
 import numpy as np
 from llm_sdk import Small_LLM_Model
-from rich import print
 from rich.console import Group
-from rich.live import Live
 from rich.panel import Panel
+from rich.spinner import Spinner
 from rich.text import Text
 
 from call_me_maybe.config import DEFAULT_MODEL
+from call_me_maybe.logger import logger
 from call_me_maybe.prompt import Prompt
-from call_me_maybe.ui.error import Error
-from call_me_maybe.ui.spinner import loading_indicator
-from call_me_maybe.ui.warning import Warning
+from call_me_maybe.ui.spinner import SpinnerText
+
+
+class ModelNotLoaded(Exception):
+    pass
 
 
 class Generator:
@@ -24,64 +26,76 @@ class Generator:
     USER_PROMPT_DELAY = 0.02
     ASSISTANT_DELAY = 0.02
 
-    def __init__(self, model: str = DEFAULT_MODEL) -> None:
-        print(
-            Text(
-                f"\nOpening model {model}...",
-                style="cyan",
+    USER_PANEL_TITLE = "User Panel"
+    ASSISTANT_PANEL_TITLE = "Assistant"
+
+    def __init__(
+        self, model: str = DEFAULT_MODEL, output: Group | None = None
+    ) -> None:
+        self.__output = output
+        try:
+            self.__init_model(model)
+        except ModelNotLoaded as e:
+            logger.error(e)
+            logger.warning(
+                f"Running default model as fallback: {DEFAULT_MODEL}"
             )
-        )
+            self.__init_model(DEFAULT_MODEL)
+
+    def __init_model(self, model: str) -> None:
+        if self.__output:
+            text = Text(f"Opening model {model}", style="cyan")
+            spinner = Spinner("dots", text=text, style="cyan")
+            self.__output.renderables.append(spinner)
         try:
             self.llm = Small_LLM_Model(model)
         except OSError as e:
-            print(
-                Error(e),
-                Warning("Running default model as fallback"),
-                Text(f"\nOpening model {DEFAULT_MODEL}...", style="cyan"),
-            )
-            self.llm = Small_LLM_Model(DEFAULT_MODEL)
-        print()
+            if self.__output:
+                text = Text(f"X {text}", style="red")
+            raise ModelNotLoaded(e)
+        finally:
+            self.__output.renderables.remove(spinner)
+            self.__output.renderables.append(text)
 
-    async def run_prompt(self, prompt: Prompt) -> str:
+    async def run_prompt(self, prompt: Prompt, group: Group) -> str:
         """Animate the prompt and its answer, then return the answer."""
+        queue: asyncio.Queue[str | None] = asyncio.Queue()
+        generate_task = asyncio.create_task(
+            self.__generate_tokens(prompt, queue)
+        )
         user_panel = Panel(
             "",
-            title="User Prompt",
+            title=self.USER_PANEL_TITLE,
             title_align="left",
             expand=False,
             style="red",
         )
         assistant_panel = Panel(
             "",
-            title="Assistant",
+            title=self.ASSISTANT_PANEL_TITLE,
             title_align="left",
             expand=False,
             style="yellow",
         )
-        queue: asyncio.Queue[str | None] = asyncio.Queue()
-        with Live(
+        group.renderables.append(user_panel)
+        user_panel.title = SpinnerText("dots", text=self.USER_PANEL_TITLE)
+        await self.__animate(
+            f">> {prompt.user_prompt}",
             user_panel,
-            refresh_per_second=self.REFRESH_PER_SECOND,
-        ) as live:
-            generate_task = asyncio.create_task(
-                self.__generate_tokens(prompt, queue)
-            )
-            async with loading_indicator(user_panel, "User Prompt"):
-                await self.__animate(
-                    f">> {prompt.user_prompt}",
-                    user_panel,
-                    delay=self.USER_PROMPT_DELAY,
-                )
-            live.update(Group(user_panel, assistant_panel))
-            output = await self.__stream_tokens(
-                queue,
-                assistant_panel,
-                title="Assistant",
-                delay=self.ASSISTANT_DELAY,
-            )
-            await generate_task
-            assistant_panel.style = "green"
-            live.update(Group(user_panel, assistant_panel))
+            delay=self.USER_PROMPT_DELAY,
+        )
+        user_panel.title = self.USER_PANEL_TITLE
+        group.renderables.append(assistant_panel)
+        assistant_panel.title = SpinnerText(
+            "dots", text=self.ASSISTANT_PANEL_TITLE
+        )
+
+        output = await self.__stream_tokens(
+            queue, assistant_panel, delay=self.ASSISTANT_DELAY
+        )
+        await generate_task
+        assistant_panel.title = self.ASSISTANT_PANEL_TITLE
+        assistant_panel.style = "green"
         return output
 
     async def __stream_tokens(
@@ -89,18 +103,16 @@ class Generator:
         queue: asyncio.Queue[str | None],
         panel: Panel,
         *,
-        title: str,
         delay: float,
     ) -> str:
         """Animate every token from `queue` into `panel` and join them."""
         tokens: list[str] = []
-        async with loading_indicator(panel, title):
-            while True:
-                token = await queue.get()
-                if token is None:
-                    break
-                tokens.append(token)
-                await self.__animate(token, panel, delay=delay)
+        while True:
+            token = await queue.get()
+            if token is None:
+                break
+            tokens.append(token)
+            await self.__animate(token, panel, delay=delay)
         return "".join(tokens)
 
     async def __animate(
