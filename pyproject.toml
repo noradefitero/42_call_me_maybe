@@ -5,7 +5,13 @@ description = "Add your description here"
 readme = "README.md"
 authors = [{ name = "noradefitero", email = "nora@defitero.com" }]
 requires-python = ">=3.10"
-dependencies = ["pydantic>=2.13.5", "typer>=0.27.2", "llm_sdk"]
+dependencies = [
+    "pydantic>=2.13.5",
+    "typer>=0.27.2",
+    "llm_sdk",
+    "toon-format",
+    "numpy>=2.2.6",
+]
 
 [project.scripts]
 call-me-maybe = "call_me_maybe:app"
@@ -17,6 +23,7 @@ build-backend = "uv_build"
 
 [tool.uv.sources]
 llm_sdk = { path = "lib/llm_sdk" }
+toon-format = { git = "https://github.com/toon-format/toon-python.git" }
 
 [tool.mypy]
 python_version = "3.10"
