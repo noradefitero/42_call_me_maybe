@@ -8,6 +8,7 @@ from call_me_maybe.io.read import (
     get_prompt_template,
     get_system_prompt_from_file,
 )
+from call_me_maybe.logger import logger
 from call_me_maybe.models.function_lists import FunctionDefinitionList
 
 
@@ -24,10 +25,13 @@ def run(
     functions_definition: Path,
     input_file: Path,
 ) -> ParsedArgs:
-    if system_prompt is None:
-        system_prompt = get_system_prompt_from_file(system_prompt_file)
+    system_prompt = get_system_prompt_from_file(system_prompt_file)
     template = get_prompt_template()
+    logger.info(
+        f"Loading fuction definitions at: {functions_definition}",
+    )
     definitions = get_function_definitions(functions_definition)
+    logger.info(f"Loading input data at: {input_file}")
     input = get_input_data(input_file)
     return {
         "template": template,
