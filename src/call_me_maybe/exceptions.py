@@ -1,0 +1,2 @@
+class PromptLoadError(Exception):
+    pass

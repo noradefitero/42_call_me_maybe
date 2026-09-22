@@ -1,2 +1,0 @@
-class NotInitiatedContext(Exception):
-    pass
