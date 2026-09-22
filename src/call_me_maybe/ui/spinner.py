@@ -1,46 +1,22 @@
-"""Reusable async loading indicator for Rich panels."""
+"""A `Spinner` that can be used as a `Panel.title`."""
 
-import asyncio
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager, suppress
-from itertools import cycle
+from time import monotonic
+from typing import cast
 
-from rich.panel import Panel
-
-DEFAULT_FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
-DEFAULT_DELAY = 0.1
+from rich.spinner import Spinner
+from rich.text import Text
 
 
-@asynccontextmanager
-async def loading_indicator(
-    panel: Panel,
-    title: str,
-    *,
-    frames: str = DEFAULT_FRAMES,
-    delay: float = DEFAULT_DELAY,
-) -> AsyncIterator[None]:
-    """Show a spinner in `panel.title` while the body runs.
+class SpinnerText(Spinner):
+    """A `Spinner` that can be used as a `Panel.title`.
 
-    The spinner cycles through `frames` every `delay` seconds. The
-    original `title` is restored once the body finishes.
+    `Panel` renders a non-string title by calling `copy()`, which
+    `Spinner` doesn't implement. This wrapper returns the current
+    animation frame as a `Text` instead.
     """
-    task = asyncio.create_task(_spin(panel, title, frames, delay))
-    try:
-        yield
-    finally:
-        task.cancel()
-        with suppress(asyncio.CancelledError):
-            await task
-    panel.title = title
 
+    def copy(self) -> Text:
+        return cast(Text, self.render(monotonic()))
 
-async def _spin(
-    panel: Panel,
-    title: str,
-    frames: str,
-    delay: float,
-) -> None:
-    """Cycle spinner frames in `panel.title` until cancelled."""
-    for frame in cycle(frames):
-        panel.title = f"{title} {frame}"
-        await asyncio.sleep(delay)
+    def __copy__(self) -> Text:
+        return self.copy()
