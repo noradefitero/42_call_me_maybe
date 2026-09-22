@@ -3,16 +3,15 @@ from pathlib import Path
 from typing import Any
 
 from pydantic import ValidationError
-from rich import print
 
 from call_me_maybe.config import (
     PROMPT_TEMPLATE_PATH,
     SYSTEM_PROMPT_DEFAULT_PATH,
 )
 from call_me_maybe.exceptions import PromptLoadError
+from call_me_maybe.logger import logger
 from call_me_maybe.models import FunctionDefinitionList
 from call_me_maybe.models.input_list import InputList
-from call_me_maybe.ui.warning import Warning
 
 
 def get_prompt_template() -> str:
@@ -27,13 +26,13 @@ def get_prompt_template() -> str:
         raise PromptLoadError(f"Failed reading prompt template: {e}")
 
 
-def get_system_prompt_from_file(
-    system_prompt_file: Path | None = None,
-) -> str:
+def get_system_prompt_from_file(system_prompt_file: Path | None = None) -> str:
     """Read a system prompt file, falling back to the bundled default."""
     if system_prompt_file:
         try:
-            print(f"Loading custom system prompt at: {system_prompt_file}")
+            logger.info(
+                f"Loading custom system prompt at: {system_prompt_file}",
+            )
             return system_prompt_file.read_text()
         except (
             FileNotFoundError,
@@ -41,11 +40,9 @@ def get_system_prompt_from_file(
             UnicodeDecodeError,
             OSError,
         ) as e:
-            print(
-                Warning(
-                    "Failed opening user defined system prompt file,"
-                    f"using default system prompt: {e}"
-                )
+            logger.warning(
+                "Failed opening user defined system prompt file,"
+                f"using default system prompt: {e}",
             )
     try:
         return SYSTEM_PROMPT_DEFAULT_PATH.read_text()
@@ -61,7 +58,6 @@ def get_system_prompt_from_file(
 def get_function_definitions(path: Path) -> FunctionDefinitionList:
     """Load and validate a JSON file describing available functions."""
     try:
-        print(f"Loading fuction definitions at: {path}")
         return FunctionDefinitionList.model_validate_json(path.read_text())
     except (
         FileNotFoundError,
@@ -86,7 +82,6 @@ def get_prompt_hook(dct: dict[Any, Any]) -> Any:
 
 def get_input_data(path: Path) -> list[str]:
     try:
-        print(f"Loading input data at: {path}")
         text = path.read_text()
     except (
         FileNotFoundError,
