@@ -5,6 +5,7 @@ from llm_sdk import Small_LLM_Model
 from rich.console import Group
 from rich.panel import Panel
 from rich.spinner import Spinner
+from rich.style import StyleType
 from rich.text import Text
 
 from call_me_maybe.config import DEFAULT_MODEL
@@ -83,6 +84,7 @@ class Generator:
             f">> {prompt.user_prompt}",
             user_panel,
             delay=self.USER_PROMPT_DELAY,
+            style="default",
         )
         user_panel.title = self.USER_PANEL_TITLE
         group.renderables.append(assistant_panel)
@@ -112,19 +114,20 @@ class Generator:
             if token is None:
                 break
             tokens.append(token)
-            await self.__animate(token, panel, delay=delay)
+            await self.__animate(token, panel, delay=delay, style="default")
         return "".join(tokens)
 
     async def __animate(
         self,
         text: str,
         panel: Panel,
+        style: StyleType | None = None,
         *,
         delay: float = 0.0,
     ) -> None:
         """Type `text` into `panel` one character at a time."""
         for char in text:
-            panel.renderable = str(panel.renderable) + char
+            panel.renderable = Text(f"{panel.renderable}{char}", style=style)
             if delay:
                 await asyncio.sleep(delay)
 
