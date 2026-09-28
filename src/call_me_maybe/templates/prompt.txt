@@ -1,5 +1,6 @@
 <|im_start|>system
 $system
+/no_think
 <tools>
 $definitions
 </tools><|im_end|>

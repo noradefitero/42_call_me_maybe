@@ -16,9 +16,8 @@ Rules:
 JSON format:
 
 {
-  "prompt": "<original user prompt>",
-  "name": "<function name>",
-  "parameters": {
-    "<parameter>": <value>
-  }
+	"name": "<function name>",
+  	"parameters": {
+    	"<parameter>": <value>
+  	}
 }
