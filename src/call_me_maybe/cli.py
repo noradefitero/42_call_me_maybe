@@ -78,6 +78,6 @@ def run(
         except PromptLoadError as e:
             # Leave the Live first so the error stays visible on the terminal.
             live.stop()
-            print(Text(e, style="red bold"))
+            print(Text(str(e), style="red bold"))
             raise typer.Exit(code=1)
         runner_run(args, model, layout["main"])
