@@ -1,7 +1,6 @@
 *This project has been created as part of the 42 curriculum by dde-fite*
 
 <div align="center">
-    <img align="center" src="media/codexion.png" width="200" alt="Project logo">
     <h3>Function calling in LLMs</h3>
 </div>
 <div align="center">
