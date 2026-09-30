@@ -11,9 +11,15 @@ run: ## Run the program with default values
 debug: ## Run the Python debugger
 	@uv run python -m pdb -m src
 
+# Artifact directories removed by `make clean`.
+ARTIFACTS := __pycache__ .mypy_cache .ruff_cache .pytest_cache
+
 .PHONY: clean
 clean: ## Clean Python artifacts
-	@rm -rf $(foreach d,$(ARTIFACTS),$(shell find . -type d -name "$(d)"))
+	@find . \( -name .venv -o -name .git \) -prune -o -type d \
+		\( -name '__pycache__' -o -name '.mypy_cache' \
+		-o -name '.ruff_cache' -o -name '.pytest_cache' \) \
+		-exec rm -rf {} +
 
 .PHONY: lint
 lint: ## Run code quality tools
