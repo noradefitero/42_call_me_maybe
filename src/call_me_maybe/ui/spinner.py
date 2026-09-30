@@ -20,3 +20,12 @@ class SpinnerText(Spinner):
 
     def __copy__(self) -> Text:
         return self.copy()
+
+
+def spinner_title(text: str) -> Text:
+    """An animating spinner to use as a `Panel.title`.
+
+    `Panel.title` is typed as `str | Text | None` although it renders
+    any `RichCast`, so the cast tells mypy what rich does at runtime.
+    """
+    return cast(Text, SpinnerText("dots", text=text))
