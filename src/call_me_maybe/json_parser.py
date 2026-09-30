@@ -5,6 +5,8 @@ from typing import ClassVar
 
 
 class JSONTokenType(Enum):
+    """The kind of token `JSONTokenizer` reads out of a JSON text."""
+
     BraceOpen = 0
     BraceClose = 1
     BracketOpen = 2
@@ -21,11 +23,15 @@ class JSONTokenType(Enum):
 
 @dataclass(frozen=True)
 class JSONToken:
+    """A token: its `type` and the raw `value` read for it."""
+
     type: JSONTokenType
     value: str
 
 
 class JSONTokenizer:
+    """Reads a partial JSON text into `JSONToken`s as it arrives."""
+
     _LITERALS: ClassVar[dict[str, JSONTokenType]] = {
         "true": JSONTokenType.BoolTrue,
         "false": JSONTokenType.BoolFalse,
@@ -119,6 +125,45 @@ class JSONTokenizer:
             return JSONToken(JSONTokenType.Incomplete, value)
         raise ValueError(f"Unexpected value: {value}")
 
+    # What a backslash may protect: the escapes JSON itself defines.
+    _ESCAPES: ClassVar[str] = '"\\/bfnrtu'
+
+    @staticmethod
+    def __find_closing_quote(input: str, start: int) -> int:
+        """Index of the quote closing the string, or -1 if there is none.
+
+        A backslash escapes whatever follows it, so `\"` does not end
+        the string. `start` is the index just after the opening quote.
+        Both scans stay in `str.find` so this stays cheap on the hot
+        path, where the grammar re-reads the answer for every candidate
+        token.
+
+        Raises ValueError on an escape JSON does not define, so a
+        string can never be read as closed when it is not valid JSON.
+        """
+        current = start
+        while True:
+            quote = input.find('"', current)
+            if quote == -1:
+                return -1
+            # Bounded to this string: a backslash past the quote cannot.
+            escape = input.find("\\", current, quote)
+            if escape == -1:
+                return quote
+            escaped = input[escape + 1 : escape + 2]
+            if escaped not in JSONTokenizer._ESCAPES:
+                raise ValueError(f"Invalid escape sequence '\\{escaped}'")
+            if escaped == "u":
+                digits = input[escape + 2 : escape + 6]
+                if len(digits) < 4 or any(
+                    d not in "0123456789abcdefABCDEF" for d in digits
+                ):
+                    raise ValueError(f"Invalid unicode escape '{digits}'")
+                current = escape + 6
+                continue
+            # Skip both characters, so `\"` reads as content, not as the end.
+            current = escape + 2
+
     @staticmethod
     def tokenize(input: str) -> list[JSONToken]:
         """Split `input` into tokens, dropping the whitespace.
@@ -138,7 +183,7 @@ class JSONTokenizer:
                 tokens.append(JSONToken(punctuation, char))
                 current += 1
             elif char == '"':
-                end = input.find('"', current + 1)
+                end = JSONTokenizer.__find_closing_quote(input, current + 1)
                 if end == -1:
                     # No closing quote: the rest is an unfinished string.
                     tokens.append(
