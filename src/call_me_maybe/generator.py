@@ -1,7 +1,6 @@
 import asyncio
 
 import numpy as np
-from llm_sdk import Small_LLM_Model
 from rich.console import Group
 from rich.panel import Panel
 from rich.spinner import Spinner
@@ -14,6 +13,7 @@ from call_me_maybe.logger import logger
 from call_me_maybe.models.function_lists import FunctionDefinitionList
 from call_me_maybe.prompt import Prompt
 from call_me_maybe.ui.spinner import spinner_title
+from llm_sdk import Small_LLM_Model
 
 
 class Generator:
@@ -197,7 +197,7 @@ class Generator:
         return answer
 
     @staticmethod
-    def __retrieve_task_exception(task: asyncio.Task) -> None:
+    def __retrieve_task_exception(task: asyncio.Task[str]) -> None:
         """Consume a finished task's exception to silence the warning."""
         if not task.cancelled():
             task.exception()

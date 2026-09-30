@@ -3,7 +3,7 @@
 `llm_sdk` wraps Hugging Face `transformers` to run causal language models
 locally, no API and no GPU required. It exposes a single class,
 `Small_LLM_Model`, built for quick experiments on modest memory. The code lives
-in `lib/llm_sdk`.
+in `llm_sdk/`.
 
 ## Requirements
 
@@ -14,11 +14,11 @@ in `lib/llm_sdk`.
 
 ## Installation
 
-The main project already depends on it by path (`lib/llm_sdk`, see
+The main project already depends on it by path (`llm_sdk`, see
 `[tool.uv.sources]` in `pyproject.toml`). To install it on its own:
 
 ```bash
-uv pip install -e lib/llm_sdk
+uv pip install -e llm_sdk
 ```
 
 ## Usage

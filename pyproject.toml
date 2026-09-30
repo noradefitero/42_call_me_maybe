@@ -1,7 +1,7 @@
 [project]
 name = "call-me-maybe"
 version = "0.1.0"
-description = "Add your description here"
+description = "Function calling in LLMs: constrained decoding with Qwen3-0.6B"
 readme = "README.md"
 authors = [{ name = "noradefitero", email = "nora@defitero.com" }]
 requires-python = ">=3.10"
@@ -11,6 +11,8 @@ dependencies = [
 	"llm_sdk",
 	"toon-format",
 	"numpy>=2.2.6",
+	"rich>=13.0.0",
+	"typing-extensions>=4.9.0",
 ]
 
 [project.scripts]
@@ -22,7 +24,7 @@ build-backend = "uv_build"
 
 
 [tool.uv.sources]
-llm_sdk = { path = "lib/llm_sdk" }
+llm_sdk = { path = "llm_sdk" }
 toon-format = { git = "https://github.com/toon-format/toon-python.git" }
 
 [tool.mypy]
@@ -32,10 +34,23 @@ warn_unused_ignores = true
 ignore_missing_imports = true
 disallow_untyped_defs = true
 check_untyped_defs = true
-exclude = ["^lib/"]
+exclude = ["^llm_sdk/"]
+
+# The SDK is vendored third-party code: use it, but do not type-check it.
+[[tool.mypy.overrides]]
+module = "llm_sdk"
+follow_imports = "skip"
+ignore_errors = true
 
 [dependency-groups]
-dev = ["flake8>=7.3.0", "mypy>=2.3.1", "pre-commit>=4.6.2", "ruff>=0.16.8"]
+dev = [
+    "flake8>=7.3.0",
+    "mypy>=2.3.1",
+    "pre-commit>=4.6.2",
+    "pytest>=8.3.0",
+    "pytest-cov>=5.0.0",
+    "ruff>=0.16.8",
+]
 
 [tool.coverage.report]
 skip_empty = true
