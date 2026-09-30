@@ -1,4 +1,5 @@
 import asyncio
+from typing import cast
 
 from rich.console import Group
 from rich.layout import Layout
@@ -17,11 +18,13 @@ def run(args: ParsedArgs, model: str, layout: Layout) -> list[str]:
         system=args["system_prompt"],
         definitions=args["definitions"],
     )
-    chat_group: Panel = layout["chat"].renderable.renderable
-    sidebar_group: Group = layout["sidebar"].renderable.renderable
+    chat_panel = cast(Panel, layout["chat"].renderable)
+    sidebar_panel = cast(Panel, layout["sidebar"].renderable)
+    chat_group = cast(Group, chat_panel.renderable)
+    sidebar_group = cast(Group, sidebar_panel.renderable)
     generator = Generator(model, output=chat_group)
     layout["sidebar"].visible = True
-    layout["chat"].renderable.title = "Chat"
+    chat_panel.title = "Chat"
     for msg in args["input"]:
         prompt.user_prompt = msg
         new_group = Group()
