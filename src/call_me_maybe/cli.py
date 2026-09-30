@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, cast
 
 import typer
 from rich import print
@@ -18,9 +18,12 @@ from call_me_maybe.config import (
 )
 from call_me_maybe.exceptions import PromptLoadError
 from call_me_maybe.logger import handler
+from call_me_maybe.pipeline.output import run as output_run
 from call_me_maybe.pipeline.parse import run as parse_run
 from call_me_maybe.pipeline.runner import run as runner_run
+from call_me_maybe.ui.countdown import countdown
 from call_me_maybe.ui.header import Header
+from call_me_maybe.ui.tail_group import TailGroup
 
 app = typer.Typer()
 
@@ -29,12 +32,21 @@ def make_layouts() -> Layout:
     layout = Layout()
     layout.split_column(
         Layout(name="header", size=3),
-        Layout(name="main", ratio=3),
+        Layout(name="content", ratio=3),
         Layout(name="console", ratio=1),
     )
-    layout["main"].split_row(
-        Layout(Group(), name="chat", ratio=3),
-        Layout(Group(), name="sidebar", ratio=2, visible=False),
+    layout["content"].split_row(
+        Layout(
+            Panel(TailGroup(entry="message")),
+            name="main",
+            ratio=3,
+        ),
+        Layout(
+            Panel(TailGroup(entry="input"), title="Sidebar"),
+            name="sidebar",
+            ratio=2,
+            visible=False,
+        ),
     )
     return layout
 
@@ -65,8 +77,6 @@ def run(
     layout = make_layouts()
     layout["header"].update(Header())
     layout["console"].update(Panel(handler, title="Logs"))
-    layout["main"]["chat"].update(Panel(Group()))
-    layout["main"]["sidebar"].update(Panel(Group(), title="Sidebar"))
     with Live(layout, refresh_per_second=20, screen=True) as live:
         try:
             args = parse_run(
@@ -80,4 +90,11 @@ def run(
             live.stop()
             print(Text(str(e), style="red bold"))
             raise typer.Exit(code=1)
-        runner_run(args, model, layout["main"])
+        response = runner_run(args, model, layout["content"])
+        output_run(response, output_file, layout["content"])
+        countdown(
+            cast(
+                Group,
+                cast(Panel, layout["content"]["main"].renderable).renderable,
+            )
+        )
