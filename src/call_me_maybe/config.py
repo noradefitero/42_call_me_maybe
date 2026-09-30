@@ -8,7 +8,7 @@ OUTPUT_DIR = DATA_DIR / "output"
 
 DEFAULT_FUNCTIONS_FILE = INPUT_DIR / "functions_definition.json"
 DEFAULT_INPUT_FILE = INPUT_DIR / "function_calling_tests.json"
-DEFAULT_OUTPUT_FILE = OUTPUT_DIR / "function_calls.json"
+DEFAULT_OUTPUT_FILE = OUTPUT_DIR / "function_calling_results.json"
 
 TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
 SYSTEM_PROMPT_DEFAULT_PATH = TEMPLATES_DIR / "system.md"
