@@ -222,3 +222,6 @@ graphify-out/
 
 # 42 subject PDF
 subject.pdf
+
+# Generated at run time (Ch. VIII: output/ must not be in the repo)
+data/output/
