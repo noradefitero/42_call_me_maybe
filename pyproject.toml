@@ -6,11 +6,11 @@ readme = "README.md"
 authors = [{ name = "noradefitero", email = "nora@defitero.com" }]
 requires-python = ">=3.10"
 dependencies = [
-    "pydantic>=2.13.5",
-    "typer>=0.27.2",
-    "llm_sdk",
-    "toon-format",
-    "numpy>=2.2.6",
+	"pydantic>=2.13.5",
+	"typer>=0.27.2",
+	"llm_sdk",
+	"toon-format",
+	"numpy>=2.2.6",
 ]
 
 [project.scripts]
@@ -32,6 +32,7 @@ warn_unused_ignores = true
 ignore_missing_imports = true
 disallow_untyped_defs = true
 check_untyped_defs = true
+exclude = ["^lib/"]
 
 [dependency-groups]
 dev = ["flake8>=7.3.0", "mypy>=2.3.1", "pre-commit>=4.6.2", "ruff>=0.16.8"]
