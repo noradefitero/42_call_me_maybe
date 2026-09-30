@@ -16,11 +16,17 @@ class Prompt:
     ) -> None:
         self.__template = Template(template)
         self.__system = system
-        definitions_json = (
+        self.__function_definitions = definitions or FunctionDefinitionList([])
+        # The grammar needs a real list even when none was given, but
+        # the model is shown "{}" rather than an empty list
+        self.__definitions = toon_format.encode(
             definitions.model_dump_json() if definitions is not None else "{}"
         )
-        self.__definitions = toon_format.encode(definitions_json)
         self.__user_prompt = user_prompt
+
+    @property
+    def function_definitions(self) -> FunctionDefinitionList:
+        return self.__function_definitions
 
     @property
     def user_prompt(self) -> str:
