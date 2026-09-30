@@ -16,6 +16,7 @@ class SpinnerText(Spinner):
     """
 
     def copy(self) -> Text:
+        """The current frame as a `Text`, frozen as a copy should be."""
         return cast(Text, self.render(monotonic()))
 
     def __copy__(self) -> Text:

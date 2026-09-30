@@ -16,6 +16,8 @@ _LOG_STYLE_BY_LEVEL: dict[int, str] = {
 
 
 class RichGroupHandler(logging.Handler):
+    """Keeps the last log lines, rendered as a single rich `Group`."""
+
     def __init__(self, max_lines: int = 100) -> None:
         super().__init__()
         self.max_lines = max_lines
@@ -23,6 +25,7 @@ class RichGroupHandler(logging.Handler):
         self._lock = Lock()
 
     def emit(self, record: logging.LogRecord) -> None:
+        """Format `record` and keep it with the last `max_lines`."""
         message = self.format(record)
         style = _LOG_STYLE_BY_LEVEL.get(record.levelno, "")
         with self._lock:

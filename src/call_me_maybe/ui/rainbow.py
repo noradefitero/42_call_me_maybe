@@ -5,7 +5,10 @@ from rich.text import Text
 
 
 class RainbowHighlighter(Highlighter):
+    """Gives every character of a `Text` its own color of the rainbow."""
+
     def highlight(self, text: Text) -> None:
+        """Color `text` character by character across the hue circle."""
         length = max(len(text) - 1, 1)
 
         for index in range(len(text)):

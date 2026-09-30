@@ -13,6 +13,8 @@ from call_me_maybe.models.function_lists import FunctionDefinitionList
 
 
 class ParsedArgs(TypedDict):
+    """Everything a run needs, read from the files it is given."""
+
     template: str
     system_prompt: str
     definitions: FunctionDefinitionList
@@ -25,6 +27,22 @@ def run(
     functions_definition: Path,
     input_file: Path,
 ) -> ParsedArgs:
+    """Read every file a run needs, before the model answers.
+
+    Args:
+        system_prompt: not read, the prompt always comes from the file.
+        system_prompt_file: system prompt file, or None for the
+            bundled default.
+        functions_definition: JSON file with the functions the model
+            may call.
+        input_file: JSON file with the messages to answer.
+
+    Returns:
+        The template, system prompt, definitions and input messages.
+
+    Raises:
+        PromptLoadError: if any of the files is missing or malformed.
+    """
     system_prompt = get_system_prompt_from_file(system_prompt_file)
     template = get_prompt_template()
     logger.info(

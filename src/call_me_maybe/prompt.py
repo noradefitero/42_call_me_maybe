@@ -6,6 +6,8 @@ from call_me_maybe.models.function_lists import FunctionDefinitionList
 
 
 class Prompt:
+    """A template with the system prompt, definitions and user message."""
+
     def __init__(
         self,
         *,
@@ -26,14 +28,17 @@ class Prompt:
 
     @property
     def function_definitions(self) -> FunctionDefinitionList:
+        """The functions on offer, which the grammar walks."""
         return self.__function_definitions
 
     @property
     def user_prompt(self) -> str:
+        """The user message being answered."""
         return self.__user_prompt
 
     @user_prompt.setter
     def user_prompt(self, msg: str) -> None:
+        """Replace the user message before the next answer."""
         self.__user_prompt = msg
 
     def __str__(self) -> str:
