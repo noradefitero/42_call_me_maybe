@@ -1,8 +1,18 @@
-*This project has been created as part of the 42 curriculum by noradefitero.*
+*This project has been created as part of the 42 curriculum by dde-fite*
 
-# call_me_maybe
+<div align="center">
+    <img align="center" src="media/codexion.png" width="200" alt="Project logo">
+    <h3>Function calling in LLMs</h3>
+</div>
+<div align="center">
+    	<a href="https://projects.intra.42.fr/projects/codexion/projects_users/4969327">
+			<img height="20px" src="https://42cv.dev/api/badge/cmtlxxq4r000y0kp4ak8vz11h/project/4969327" alt="dde-fite's 42 Codexion Score" />
+		</a>
+		<img alt="" src="https://img.shields.io/github/actions/workflow/status/noradefitero/42_Codexion/ci.yaml">
+		<img alt="" src="https://img.shields.io/github/license/noradefitero/42_Codexion">
+</div>
 
-Function calling in LLMs: constrained decoding with `Qwen/Qwen3-0.6B`.
+---
 
 ## Description
 
