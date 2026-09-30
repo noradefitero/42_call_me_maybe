@@ -1,6 +1,6 @@
 import asyncio
 from time import sleep
-from typing import cast
+from typing import Any, cast
 
 from pydantic import ValidationError
 from rich.console import Group, RenderableType
@@ -10,9 +10,11 @@ from rich.spinner import Spinner
 from rich.text import Text
 
 from call_me_maybe.config import UI_LOADING_DELAY
+from call_me_maybe.exceptions import NoValidCallError
 from call_me_maybe.generator import Generator
 from call_me_maybe.logger import logger
 from call_me_maybe.models.function_call import FunctionCall
+from call_me_maybe.models.function_lists import FunctionDefinitionList
 from call_me_maybe.models.llm_function_call import LLMFunctionCall
 from call_me_maybe.pipeline.parse import ParsedArgs
 from call_me_maybe.prompt import Prompt
@@ -55,12 +57,20 @@ def __answer(
     new_group: Group,
     run_info: Group,
     msg: str,
-) -> FunctionCall | None:
+    definitions: FunctionDefinitionList,
+) -> FunctionCall:
     """Ask the model to answer `msg` and validate what comes back.
 
     Every attempt is reported in `run_info`, and the assistant panel
     turns green once an answer is accepted and red if it is not.
-    Returns the validated call, or None if no attempt gives one.
+
+    Returns:
+        The validated call.
+
+    Raises:
+        NoValidCallError: if no attempt produced a schema-valid call.
+            Nothing is invented to fill the gap, because a placeholder
+            would not match the schema.
     """
     answering_spinner = Spinner("dots", text="Answering to input")
     for attempt in range(MAX_RETRIES):
@@ -69,9 +79,8 @@ def __answer(
             generator.run_prompt(prompt, new_group, attempt)
         )
         if answer is None:
-            # The grammar deadlocked and the panel is already red;
-            # the next attempt picks a different token, so it can
-            # get out of the deadlock.
+            # The panel is already red; the next attempt picks a different
+            # token, so it can get out of the deadlock.
             logger.warning(f"Grammar deadlock, retry {attempt}/{MAX_RETRIES}")
             answering_spinner = Spinner(
                 "dots",
@@ -109,9 +118,43 @@ def __answer(
         __show_done(run_info, validating_spinner, "Validated answer format")
         assistant_panel.style = "green"
         return FunctionCall(
-            prompt=msg, name=call.name, parameters=call.parameters
+            prompt=msg,
+            name=call.name,
+            parameters=__typed_parameters(call, definitions),
         )
-    return None
+    logger.error(f"No valid call produced for prompt: {msg}")
+    raise NoValidCallError(
+        f"No schema-valid call for the prompt {msg!r} after "
+        f"{MAX_RETRIES} attempts. No output file was written: filling "
+        f"the gap with a placeholder would not match the schema."
+    )
+
+
+def __typed_parameters(
+    call: LLMFunctionCall, definitions: FunctionDefinitionList
+) -> dict[str, Any]:
+    """Give each argument the type the chosen function declares.
+
+    A numeric argument is written as a float, the form the subject
+    shows in its example output. Every other argument is left as the
+    model produced it, since the grammar already fixed its type.
+    """
+    definition = next(
+        (f for f in definitions.root if f.name == call.name), None
+    )
+    if definition is None:
+        return call.parameters
+    typed: dict[str, Any] = {}
+    for key, value in call.parameters.items():
+        spec = definition.parameters.get(key)
+        declared = spec.get("type") if spec is not None else None
+        # `bool` is a subclass of `int`, so it is not a number here.
+        is_int = isinstance(value, int) and not isinstance(value, bool)
+        if declared in ("number", "float") and is_int:
+            typed[key] = float(value)
+        else:
+            typed[key] = value
+    return typed
 
 
 def run(args: ParsedArgs, model: str, layout: Layout) -> list[FunctionCall]:
@@ -129,14 +172,14 @@ def run(args: ParsedArgs, model: str, layout: Layout) -> list[FunctionCall]:
     layout["sidebar"].visible = True
     main_panel.title = "Chat"
     response: list[FunctionCall] = []
+    definitions = args["definitions"]
     for idx, msg in enumerate(args["input"]):
         prompt.user_prompt = msg
-        # Each input gets a group of its own, where the answer and
-        # every retry it needs are appended.
+        # Its own group, so the answer and its retries stay together.
         new_group = Group()
         main_group.renderables.append(new_group)
         run_info = __input_panel(sidebar_group, idx, msg)
-        call = __answer(generator, prompt, new_group, run_info, msg)
-        if call is not None:
-            response.append(call)
+        response.append(
+            __answer(generator, prompt, new_group, run_info, msg, definitions)
+        )
     return response
