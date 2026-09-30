@@ -16,7 +16,11 @@ from call_me_maybe.config import (
     DEFAULT_MODEL,
     DEFAULT_OUTPUT_FILE,
 )
-from call_me_maybe.exceptions import PromptLoadError
+from call_me_maybe.exceptions import (
+    NoValidCallError,
+    OutputWriteError,
+    PromptLoadError,
+)
 from call_me_maybe.logger import handler
 from call_me_maybe.pipeline.output import run as output_run
 from call_me_maybe.pipeline.parse import run as parse_run
@@ -29,6 +33,7 @@ app = typer.Typer()
 
 
 def make_layouts() -> Layout:
+    """Build the header, chat, sidebar and log layout of the TUI."""
     layout = Layout()
     layout.split_column(
         Layout(name="header", size=3),
@@ -54,7 +59,12 @@ def make_layouts() -> Layout:
 @app.command()
 def run(
     functions_definition: Annotated[
-        Path, typer.Option("--functions-definition", "-f")
+        Path,
+        typer.Option(
+            "--functions-definition",
+            "--functions_definition",
+            "-f",
+        ),
     ] = DEFAULT_FUNCTIONS_FILE,
     input_file: Annotated[
         Path, typer.Option("--input", "-i")
@@ -71,6 +81,32 @@ def run(
     model: Annotated[str, typer.Option("--model", "-m")] = DEFAULT_MODEL,
     version: Annotated[bool, typer.Option("--version")] = False,
 ) -> None:
+    """Answer every input message with a call to one function.
+
+    The whole run is shown in a `Live` layout: the chat in the middle,
+    the progress of each message in the sidebar, the log at the
+    bottom. `--version` prints the version and exits instead.
+
+    Args:
+        functions_definition: JSON file with the functions the model
+            may call.
+        input_file: JSON file with the messages to answer.
+        output_file: JSON file the collected calls are written to.
+        system_prompt: not used, the system prompt is read from a
+            file.
+        system_prompt_file: system prompt file, or None for the
+            bundled default.
+        model: the LLM that answers.
+        version: print the version and exit.
+
+    Returns:
+        None.
+
+    Raises:
+        typer.Exit: on `version`, on a prompt or output file that
+            cannot be read or written, and when a prompt gets no
+            schema-valid call, in which case no output file is written.
+    """
     if version:
         print(f"call-me-maybe {__version__}")
         raise typer.Exit()
@@ -90,8 +126,18 @@ def run(
             live.stop()
             print(Text(str(e), style="red bold"))
             raise typer.Exit(code=1)
-        response = runner_run(args, model, layout["content"])
-        output_run(response, output_file, layout["content"])
+        try:
+            response = runner_run(args, model, layout["content"])
+        except NoValidCallError as e:
+            live.stop()
+            print(Text(str(e), style="red bold"))
+            raise typer.Exit(code=1)
+        try:
+            output_run(response, output_file, layout["content"])
+        except OutputWriteError as e:
+            live.stop()
+            print(Text(str(e), style="red bold"))
+            raise typer.Exit(code=1)
         countdown(
             cast(
                 Group,
