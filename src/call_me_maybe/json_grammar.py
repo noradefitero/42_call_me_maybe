@@ -84,8 +84,30 @@ class JSONGrammar:
     _VALUE_TYPES: ClassVar[dict[str, frozenset[JSONTokenType]]] = {
         "string": frozenset({JSONTokenType.String, JSONTokenType.Null}),
         "number": frozenset({JSONTokenType.Number, JSONTokenType.Null}),
+        "float": frozenset({JSONTokenType.Number, JSONTokenType.Null}),
+        "integer": frozenset({JSONTokenType.Number, JSONTokenType.Null}),
+        "boolean": frozenset(
+            {
+                JSONTokenType.BoolTrue,
+                JSONTokenType.BoolFalse,
+                JSONTokenType.Null,
+            }
+        ),
+        # Nested values are not walked, so only `null` keeps it closeable.
+        "array": frozenset({JSONTokenType.Null}),
+        "object": frozenset({JSONTokenType.Null}),
     }
-    _ANY_VALUE: ClassVar[frozenset[JSONTokenType]] = frozenset(JSONTokenType)
+    # An unknown type closes on `null` too, rather than deadlocking.
+    _UNKNOWN_VALUE: ClassVar[frozenset[JSONTokenType]] = frozenset(
+        {JSONTokenType.Null}
+    )
+
+    @staticmethod
+    def __allowed(declared: str) -> frozenset[JSONTokenType]:
+        """The token types a parameter of type `declared` may take."""
+        return JSONGrammar._VALUE_TYPES.get(
+            declared, JSONGrammar._UNKNOWN_VALUE
+        )
 
     @staticmethod
     def valid_prefix(text: str, functions: FunctionDefinitionList) -> bool:
@@ -235,9 +257,10 @@ class JSONGrammar:
         if call.function is None or call.parameter is None:
             return False
         declared = call.function.parameters[call.parameter]["type"]
-        return token.type in JSONGrammar._VALUE_TYPES.get(
-            declared, JSONGrammar._ANY_VALUE
-        )
+        if token.type is JSONTokenType.Number and declared == "integer":
+            # An integer may not carry a fraction or an exponent.
+            return not any(char in token.value for char in ".eE")
+        return token.type in JSONGrammar.__allowed(declared)
 
     @staticmethod
     def __fragment_fits(
@@ -287,13 +310,31 @@ class JSONGrammar:
         the parameter declares."""
         if call.function is None or call.parameter is None:
             return False
-        match call.function.parameters[call.parameter]["type"]:
-            case "string":
-                # Any text can still be a string value.
-                return quoted
-            case "number":
-                return not quoted and JSONGrammar.__could_be_number(value)
-        return False
+        declared = call.function.parameters[call.parameter]["type"]
+        allowed = JSONGrammar.__allowed(declared)
+        # Quoted text grows only into a string value.
+        if quoted:
+            return JSONTokenType.String in allowed
+        # Bare text may grow into a literal or a number, depending on the type.
+        if JSONGrammar.__could_be_literal(value, allowed):
+            return True
+        if JSONTokenType.Number not in allowed:
+            return False
+        if not JSONGrammar.__could_be_number(value):
+            return False
+        return declared != "integer" or not any(
+            char in value for char in ".eE"
+        )
+
+    @staticmethod
+    def __could_be_literal(
+        value: str, allowed: frozenset[JSONTokenType]
+    ) -> bool:
+        """True if `value` could still grow into an allowed literal."""
+        return any(
+            token_type in allowed and word.startswith(value)
+            for word, token_type in JSONTokenizer._LITERALS.items()
+        )
 
     @staticmethod
     def __could_be_number(value: str) -> bool:
