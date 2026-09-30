@@ -15,6 +15,10 @@ from call_me_maybe.models.input_list import InputList
 
 
 def get_prompt_template() -> str:
+    """Read the prompt template shipped with the program.
+
+    Raises PromptLoadError if it cannot be read.
+    """
     try:
         return PROMPT_TEMPLATE_PATH.read_text()
     except (
@@ -65,12 +69,16 @@ def get_function_definitions(path: Path) -> FunctionDefinitionList:
         UnicodeDecodeError,
         OSError,
     ) as e:
-        raise PromptLoadError(f"Failed reading prompt template: {e}")
+        raise PromptLoadError(f"Failed reading function definitions: {e}")
     except ValidationError as e:
-        raise PromptLoadError(f"Incorrect format in prompt template: {e}")
+        raise PromptLoadError(f"Incorrect format in function definitions: {e}")
 
 
 def get_prompt_hook(dct: dict[Any, Any]) -> Any:
+    """Unwrap an input message object down to its `prompt` value.
+
+    Raises PromptLoadError if the object is not a lone `prompt`.
+    """
     if "prompt" not in dct:
         raise PromptLoadError(
             f"Prompt value is not defined in input message {dct}"
@@ -81,6 +89,11 @@ def get_prompt_hook(dct: dict[Any, Any]) -> Any:
 
 
 def get_input_data(path: Path) -> list[str]:
+    """Read the input messages from `path` as a list of strings.
+
+    Raises PromptLoadError if the file is missing, or is not the
+    expected list of message objects.
+    """
     try:
         text = path.read_text()
     except (
